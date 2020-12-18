@@ -1,5 +1,5 @@
-var canvas = document.getElementById("myCanvas");
-var ctx = canvas.getContext("2d");
+const canvas = document.getElementById("myCanvas");
+const ctx = canvas.getContext("2d");
 
 class Point{
     constructor(x, y) {
@@ -24,21 +24,22 @@ class Racket{
     }
 }
 
-var countOfBlocks = new Point(10, 5);
-var rightArrowFlag, leftArrowFlag;
-var ball = new Ball(new Point(canvas.clientWidth/2, canvas.clientHeight - 70), 15, new Point(3,3));
-var racket = new Racket(new Point((canvas.clientWidth - 60) / 2 , canvas.clientHeight - 20), new Point(120, 20), 10);
-var blocks = [];
+let score = 0;
+const countOfBlocks = new Point(10, 5);
+let blockSize = new Point(canvas.clientWidth/countOfBlocks.x, canvas.clientHeight/(2.5*countOfBlocks.y));
+let rightArrowFlag, leftArrowFlag;
+let ball = new Ball(new Point(canvas.clientWidth / 2, canvas.clientHeight - 40), 15, new Point(3, 3));
+let racket = new Racket(new Point(canvas.clientWidth / 2, canvas.clientHeight - 10), new Point(120, 20), 10);
+let blocks = [];
 
-for(var i = 0; i < countOfBlocks.y; i++){
+for(let i = 0; i < countOfBlocks.y; i++){
     blocks[i] = [];
-    for(var j = 0; j < countOfBlocks.x; j++){
+    for(let j = 0; j < countOfBlocks.x; j++){
         blocks[i][j] = true;
     }
 }
 
-
-var interval = setInterval(drawFrame, 10);
+const interval = setInterval(drawFrame, 50);
 
 function drawBall(ball4draw){
     ctx.fillStyle = "rgb(32,198,170)";
@@ -57,12 +58,16 @@ function drawRacket(racket4draw){
 }
 
 function drawBlocks(){
-    for(var i = 0; i < countOfBlocks.y; i++){
-        for(var j = 0; j < countOfBlocks.x; j++){
+    for(let i = 0; i < countOfBlocks.y; i++){
+        for(let j = 0; j < countOfBlocks.x; j++){
             if(blocks[i][j]){
                 ctx.fillStyle = "rgb(159,135,188)";
                 ctx.beginPath();
-                ctx.rect(j*canvas.clientWidth/countOfBlocks.x, i*canvas.clientHeight/(2.5*countOfBlocks.y), canvas.clientWidth/countOfBlocks.x, canvas.clientHeight/(2.5*countOfBlocks.y));
+                ctx.rect(
+                    j*canvas.clientWidth/countOfBlocks.x, 
+                    i*canvas.clientHeight/(2.5*countOfBlocks.y), 
+                    canvas.clientWidth/countOfBlocks.x, 
+                    canvas.clientHeight/(2.5*countOfBlocks.y));
                 ctx.fill();
                 ctx.fillStyle = "rgb(7,3,10)";
                 ctx.stroke();
@@ -72,25 +77,21 @@ function drawBlocks(){
     }
 }
 
-function checkCollisions(){
-    for(var i = 0; i < countOfBlocks.y; i++){
-        for(var j = 0; j < countOfBlocks.x; j++){
-            if(blocks[i][j])
-            if(ball.pos.x > j*canvas.clientWidth/countOfBlocks.x && ball.pos.x < j*canvas.clientWidth/countOfBlocks.x+canvas.clientWidth/countOfBlocks.x && ball.pos.y > i*canvas.clientHeight/(2.5*countOfBlocks.y) && ball.pos.y < i*canvas.clientHeight/(2.5*countOfBlocks.y)+canvas.clientHeight/(2.5*countOfBlocks.y)) {
-                ball.velocity.y *= -1;
-                blocks[i][j] = false;
-            }
-        }
-    }
+function drawText(){
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "rgb(22,50,46)";
+    ctx.fillText("Score: " + score, 10, canvas.offsetHeight/2);
 }
 
 function drawFrame()
 {
+    checkCollisions();
+    
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    drawBall(ball);
     drawRacket(racket);
     drawBlocks();
-    checkCollisions();
+    drawBall(ball);
+    drawText();
 
     switch (true) {
         case (ball.pos.x <= ball.radius): 
@@ -99,30 +100,31 @@ function drawFrame()
         case (ball.pos.x >= canvas.clientWidth - ball.radius): 
             ball.velocity.x *= -1; 
             break;
-        // case (ball.pos.x + ball.radius >= racket.pos.x - racket.size.x / 2 &&
-        //     ball.pos.y + ball.radius >= racket.pos.y - racket.size.y):
-        //     ball.velocity.x *= -1;
-        //     break;
-        // case (ball.pos.x - ball.radius <= racket.pos.x + racket.size.x / 2 &&
-        //     ball.pos.y + ball.radius >= racket.pos.y - racket.size.y):
-        //     ball.velocity.x *= -1;
-        //     break;
     }
 
     switch (true) {
         case (ball.pos.y <= ball.radius): 
             ball.velocity.y *= -1; 
             break;
+        case (ball.pos.y >= canvas.clientHeight - ball.radius):
+            ball.velocity.y *= -1;
+            break;
         case (ball.pos.y + ball.radius >= racket.pos.y - racket.size.y / 2 &&
-            ball.pos.x >= racket.pos.x - racket.size.x / 2 &&
-            ball.pos.x <= racket.pos.x + racket.size.x / 2):
-            ball.velocity.y = -Math.abs(ball.velocity.y); 
+            ball.pos.x + ball.radius >= racket.pos.x - racket.size.x / 2 &&
+            ball.pos.x - ball.radius <= racket.pos.x + racket.size.x / 2):
+            ball.velocity.y = -Math.abs(ball.velocity.y);
+            if(leftArrowFlag && ball.velocity.x > -5)
+                ball.velocity.x -= 0.91;
+            else if(rightArrowFlag && ball.velocity.x < 5)
+                ball.velocity.x += 0.91;
+            else if(Math.abs(ball.velocity.x) > 1)
+                ball.velocity.x -= ball.velocity.x * 0.15;
             break;
-        case (ball.pos.y >=canvas.clientHeight - ball.radius): 
-            alert("You lose!");
-            document.location.reload();
-            clearInterval(interval);
-            break;
+        // case (ball.pos.y >=canvas.clientHeight - ball.radius): 
+        //     alert("You lose! Score: " + score);
+        //     document.location.reload();
+        //     clearInterval(interval);
+        //     break;
     }
 
     ball.pos.x += ball.velocity.x;
@@ -134,6 +136,51 @@ function drawFrame()
     
     if(leftArrowFlag){
         racket.pos.x -= racket.velocity;
+    }
+}
+
+
+function checkCollisions(){
+    var blockExist;
+    for(let i = 0; i < countOfBlocks.y; i++){
+        for(let j = 0; j < countOfBlocks.x; j++){
+            if(blocks[i][j]) {
+                blockExist = true;
+                var collision = false;
+                var distX = Math.abs(ball.pos.x - j * blockSize.x - blockSize.x / 2);
+                var distY = Math.abs(ball.pos.y - i * blockSize.y - blockSize.y / 2);
+                
+                console.log(distX + " " + distY + " " + i + " " + j + " " + ball.pos.x + " " + ball.pos.y + " " + (i * blockSize.y + blockSize.y / 2));
+                
+                if(distX > (blockSize.x/2 + ball.radius)) {continue;}
+                if(distY > (blockSize.y/2 + ball.radius)) {continue;}
+                
+                if(distX <= blockSize.x/2){collision = true;}
+                if(distY <= blockSize.y/2){collision = true;}
+                
+                if(!collision) {
+                    var dx = distX - blockSize.x / 2;
+                    var dy = distY - blockSize.y / 2;
+                    collision = (dx * dx + dy * dy <= (ball.radius * ball.radius));
+                }
+                
+                if(collision){
+                    if(ball.pos.x < j*blockSize.x|| ball.pos.x > j*blockSize.x + blockSize.x)
+                        ball.velocity.x *= -1;
+                    else if(ball.pos.y < i*blockSize.y || (ball.pos.y > i*blockSize.y + blockSize.y)) {
+                        ball.velocity.y *= -1;
+                    }
+                    score += 10;
+                    blocks[i][j] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if(!blockExist){
+        alert("You won! Score: " + score);
+        document.location.reload();
+        clearInterval(interval);
     }
 }
 
