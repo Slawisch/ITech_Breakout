@@ -24,6 +24,15 @@ class Racket{
     }
 }
 
+class Block{
+    constructor(size, rang, live) {
+    this.size = size;
+    this.rang = rang;
+    this.live = live;
+    }
+    
+}
+
 let score = 0;
 const countOfBlocks = new Point(10, 5);
 let blockSize = new Point(canvas.clientWidth/countOfBlocks.x, canvas.clientHeight/(2.5*countOfBlocks.y));
@@ -35,23 +44,54 @@ let blocks = [];
 for(let i = 0; i < countOfBlocks.y; i++){
     blocks[i] = [];
     for(let j = 0; j < countOfBlocks.x; j++){
-        blocks[i][j] = true;
+        switch (i) {
+            case 0:
+            case 1:
+                blocks[i][j] = new Block(blockSize, 3, true);
+                break;
+            case 2:
+            case 3:
+                blocks[i][j] = new Block(blockSize, 2, true);
+                break;
+            default:
+                blocks[i][j] = new Block(blockSize, 1, true);
+        }
     }
 }
 
-const interval = setInterval(drawFrame, 50);
+const interval = setInterval(drawFrame, 10);
 
 function drawBall(ball4draw){
-    ctx.fillStyle = "rgb(32,198,170)";
     ctx.beginPath();
+    ctx.fillStyle = "rgba(0,255,250,0.22)";
+    ctx.arc(ball4draw.pos.x, ball4draw.pos.y, ball4draw.radius + 4, 0, Math.PI*2, false);
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(0,255,250,0.5)";
+    ctx.arc(ball4draw.pos.x, ball4draw.pos.y, ball4draw.radius + 2, 0, Math.PI*2, false);
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = "rgb(0,255,250)";
     ctx.arc(ball4draw.pos.x, ball4draw.pos.y, ball4draw.radius, 0, Math.PI*2, false);
     ctx.fill();
     ctx.closePath();
 }
 
 function drawRacket(racket4draw){
-    ctx.fillStyle = "rgb(0,125,231)";
     ctx.beginPath();
+    ctx.fillStyle = "rgba(71,168,255    ,0.22)";
+    ctx.rect(racket4draw.pos.x - racket4draw.size.x / 2-4, racket4draw.pos.y - racket4draw.size.y / 2-4, racket4draw.size.x+8, racket4draw.size.y+8);
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(71,168,255,0.49)";
+    ctx.rect(racket4draw.pos.x - racket4draw.size.x / 2-2, racket4draw.pos.y - racket4draw.size.y / 2-2, racket4draw.size.x+4, racket4draw.size.y+4);
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = "rgb(71,168,255)";
     ctx.rect(racket4draw.pos.x - racket4draw.size.x / 2, racket4draw.pos.y - racket4draw.size.y / 2, racket4draw.size.x, racket4draw.size.y);
     ctx.fill();
     ctx.closePath();
@@ -60,17 +100,54 @@ function drawRacket(racket4draw){
 function drawBlocks(){
     for(let i = 0; i < countOfBlocks.y; i++){
         for(let j = 0; j < countOfBlocks.x; j++){
-            if(blocks[i][j]){
-                ctx.fillStyle = "rgb(159,135,188)";
+            if(blocks[i][j].live){
+                var baseColor, baseColor2, baseColor3;
+                switch (blocks[i][j].rang) {
+                    case 3: 
+                        baseColor = "#ffb3c8";
+                        baseColor2 = "rgba(255,124,151,0.44)";
+                        baseColor3 = "rgba(255,65,114,0.16)";
+                        break;
+                    case 2:
+                        baseColor = "#ffe990";
+                        baseColor2 = "rgba(255,202,105,0.43)";
+                        baseColor3 = "rgba(255,217,78,0.18)";
+                        break;
+                    case 1:
+                        baseColor = "#acff96";
+                        baseColor2 = "rgba(107,255,88,0.34)";
+                        baseColor3 = "rgba(53,255,20,0.13)";
+                        break;
+                }
+                
                 ctx.beginPath();
+                ctx.fillStyle = baseColor3;
                 ctx.rect(
-                    j*canvas.clientWidth/countOfBlocks.x, 
-                    i*canvas.clientHeight/(2.5*countOfBlocks.y), 
-                    canvas.clientWidth/countOfBlocks.x, 
-                    canvas.clientHeight/(2.5*countOfBlocks.y));
+                    j*blockSize.x,
+                    i*blockSize.y,
+                    blockSize.x,
+                    blockSize.y);
                 ctx.fill();
-                ctx.fillStyle = "rgb(7,3,10)";
-                ctx.stroke();
+                ctx.closePath();
+                
+                ctx.beginPath();
+                ctx.fillStyle = baseColor2;
+                ctx.rect(
+                    j*blockSize.x + 2,
+                    i*blockSize.y + 2,
+                    blockSize.x - 4,
+                    blockSize.y - 4);
+                ctx.fill();
+                ctx.closePath();
+                
+                ctx.beginPath();
+                ctx.fillStyle = baseColor;
+                ctx.rect(
+                    j*blockSize.x + 4,
+                    i*blockSize.y + 4,
+                    blockSize.x - 8,
+                    blockSize.y - 8);
+                ctx.fill();
                 ctx.closePath();
             }
         }
@@ -78,9 +155,9 @@ function drawBlocks(){
 }
 
 function drawText(){
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "rgb(22,50,46)";
-    ctx.fillText("Score: " + score, 10, canvas.offsetHeight/2);
+    ctx.font = "21px Arial";
+    ctx.fillStyle = "rgba(163,216,255,0.59)";
+    ctx.fillText("Score: " + score, 8, canvas.offsetHeight/2);
 }
 
 function drawFrame()
@@ -106,9 +183,6 @@ function drawFrame()
         case (ball.pos.y <= ball.radius): 
             ball.velocity.y *= -1; 
             break;
-        case (ball.pos.y >= canvas.clientHeight - ball.radius):
-            ball.velocity.y *= -1;
-            break;
         case (ball.pos.y + ball.radius >= racket.pos.y - racket.size.y / 2 &&
             ball.pos.x + ball.radius >= racket.pos.x - racket.size.x / 2 &&
             ball.pos.x - ball.radius <= racket.pos.x + racket.size.x / 2):
@@ -120,25 +194,24 @@ function drawFrame()
             else if(Math.abs(ball.velocity.x) > 1)
                 ball.velocity.x -= ball.velocity.x * 0.15;
             break;
-        // case (ball.pos.y >=canvas.clientHeight - ball.radius): 
-        //     alert("You lose! Score: " + score);
-        //     document.location.reload();
-        //     clearInterval(interval);
-        //     break;
+        case (ball.pos.y >=canvas.clientHeight - ball.radius): 
+            alert("You lose! Score: " + score);
+            document.location.reload();
+            clearInterval(interval);
+            break;
     }
 
     ball.pos.x += ball.velocity.x;
     ball.pos.y += ball.velocity.y;
     
-    if(rightArrowFlag){
+    if(rightArrowFlag && racket.pos.x + racket.size.x/2 < canvas.clientWidth){
         racket.pos.x += racket.velocity;
     }
     
-    if(leftArrowFlag){
+    if(leftArrowFlag && racket.pos.x - racket.size.x/2 > 0){
         racket.pos.x -= racket.velocity;
     }
 }
-
 
 function checkCollisions(){
     var blockExist;
@@ -170,7 +243,7 @@ function checkCollisions(){
                     else if(ball.pos.y < i*blockSize.y || (ball.pos.y > i*blockSize.y + blockSize.y)) {
                         ball.velocity.y *= -1;
                     }
-                    score += 10;
+                    score += 10*blocks[i][j].rang;
                     blocks[i][j] = false;
                     return;
                 }
